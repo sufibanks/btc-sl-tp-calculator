@@ -1,71 +1,148 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BTC SL/TP Calculator</title>
+  <title>BTC SL/TP & Position Size Calculator</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 1rem;
-      background-color: #f9fafb;
-      color: #111827;
-      max-width: 500px;
-      margin: auto;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-    }
-    button {
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 1rem;
-      padding: 1rem;
-      background-color: #e0f2fe;
-      border-radius: 0.5rem;
-    }
+    :root {
+      --primary: #1e40af;
+      --secondary: #e0f2fe;
+      --background: #f9fafb;
+      --text: #111827;
+      --card: white;
+    }[data-theme="dark"] {
+  --primary: #3b82f6;
+  --secondary: #1e3a8a;
+  --background: #0f172a;
+  --text: #f1f5f9;
+  --card: #1e293b;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 2rem 1rem;
+  background-color: var(--background);
+  color: var(--text);
+  max-width: 500px;
+  margin: auto;
+  transition: background 0.3s, color 0.3s;
+}
+
+h2 {
+  color: var(--primary);
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 0.75rem;
+  display: block;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.3rem 0 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  background-color: var(--card);
+  color: var(--text);
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+button {
+  background-color: var(--primary);
+  color: white;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background-color: #1d4ed8;
+}
+
+.result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--secondary);
+  border-left: 4px solid var(--primary);
+  border-radius: 0.6rem;
+  line-height: 1.7;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.toggle-theme {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.currency-switch {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.currency-switch select {
+  flex: 1;
+}
+
   </style>
 </head>
-<body>
-  <h2>BTC SL/TP Calculator</h2>
-  <label>Entry Price</label>
-  <input type="number" id="entry" placeholder="e.g. 107800" />
+<body data-theme="light">
+  <div class="toggle-theme">
+    <button onclick="toggleTheme()">🌗 Toggle Dark Mode</button>
+  </div>  <h2>BTC SL/TP & Position Size Calculator</h2>  <div class="currency-switch">
+    <label for="currency">Currency</label>
+    <select id="currency">
+      <option value="USD">USD</option>
+      <option value="USDT">USDT</option>
+    </select>
+  </div><label for="entry">Entry Price</label> <input type="number" id="entry" placeholder="e.g. 107800" />
 
-  <label>Trade Direction</label>
-  <select id="direction">
-    <option value="sell">Sell</option>
-    <option value="buy">Buy</option>
-  </select>
+<label for="direction">Trade Direction</label> <select id="direction"> <option value="sell">Sell</option> <option value="buy">Buy</option> </select>
 
-  <label>ATR (15m)</label>
-  <input type="number" id="atr" placeholder="e.g. 150" />
+<label for="atr">ATR (15m)</label> <input type="number" id="atr" placeholder="e.g. 150" />
 
-  <label>Buffer Multiplier</label>
-  <input type="number" step="0.1" id="buffer" value="1.2" />
+<label for="buffer">Buffer Multiplier</label> <input type="number" step="0.1" id="buffer" value="1.2" />
 
-  <label>Risk:Reward Ratio</label>
-  <input type="number" step="0.1" id="rr" value="2" />
+<label for="rr">Risk:Reward Ratio</label> <input type="number" step="0.1" id="rr" value="2" />
 
-  <button onclick="calculate()">Calculate</button>
+<label for="balance">Account Balance</label> <input type="number" id="balance" placeholder="e.g. 600" />
 
-  <div class="result" id="result"></div>
+<label for="riskPercent">Risk per Trade (%)</label> <input type="number" step="0.1" id="riskPercent" value="2" />
 
-  <script>
+<button onclick="calculate()">Calculate</button>
+
+  <div class="result" id="result"></div>  <script>
+    function toggleTheme() {
+      const body = document.body;
+      const theme = body.getAttribute('data-theme');
+      body.setAttribute('data-theme', theme === 'light' ? 'dark' : 'light');
+    }
+
     function calculate() {
       const entry = parseFloat(document.getElementById('entry').value);
       const direction = document.getElementById('direction').value;
       const atr = parseFloat(document.getElementById('atr').value);
       const buffer = parseFloat(document.getElementById('buffer').value);
       const rr = parseFloat(document.getElementById('rr').value);
+      const balance = parseFloat(document.getElementById('balance').value);
+      const riskPercent = parseFloat(document.getElementById('riskPercent').value);
+      const currency = document.getElementById('currency').value;
+
+      if (isNaN(entry) || isNaN(atr) || isNaN(buffer) || isNaN(rr) || isNaN(balance) || isNaN(riskPercent)) {
+        document.getElementById('result').innerHTML = '<strong>Please fill in all fields correctly.</strong>';
+        return;
+      }
 
       const slDistance = atr * buffer;
       const tpDistance = slDistance * rr;
@@ -80,14 +157,24 @@
         tp = entry + tpDistance;
       }
 
+      const riskAmount = (riskPercent / 100) * balance;
+      const positionSize = riskAmount / slDistance;
+      const notionalSize = positionSize * entry;
+      const requiredLeverage = notionalSize / balance;
+
       document.getElementById('result').innerHTML = `
-        <strong>Stop Loss:</strong> $${sl.toFixed(2)}<br />
-        <strong>Take Profit:</strong> $${tp.toFixed(2)}<br />
-        <strong>SL Size:</strong> $${slDistance.toFixed(2)}<br />
-        <strong>TP Size:</strong> $${tpDistance.toFixed(2)}<br />
-        <strong>RR Ratio:</strong> 1:${rr.toFixed(1)}
+        <strong>Currency:</strong> ${currency}<br />
+        <strong>Stop Loss:</strong> ${currency} ${sl.toFixed(2)}<br />
+        <strong>Take Profit:</strong> ${currency} ${tp.toFixed(2)}<br />
+        <strong>SL Size:</strong> ${currency} ${slDistance.toFixed(2)}<br />
+        <strong>TP Size:</strong> ${currency} ${tpDistance.toFixed(2)}<br />
+        <strong>RR Ratio:</strong> 1:${rr.toFixed(1)}<br /><br />
+
+        <strong>Account Risk:</strong> ${currency} ${riskAmount.toFixed(2)}<br />
+        <strong>Position Size (BTC):</strong> ${positionSize.toFixed(6)}<br />
+        <strong>Notional Trade Size:</strong> ${currency} ${notionalSize.toFixed(2)}<br />
+        <strong>Required Leverage:</strong> ${requiredLeverage.toFixed(2)}x
       `;
     }
-  </script>
-</body>
+  </script></body>
 </html>
