@@ -5,17 +5,17 @@
   <title>BTC SL/TP & Position Size Calculator</title>
   <style>
     :root {
-      --primary: #1e40af;
-      --secondary: #e0f2fe;
-      --background: #f9fafb;
-      --text: #111827;
-      --card: white;
+      --primary: #6b7280;
+      --secondary: #1f2937;
+      --background: #f3f4f6;
+      --text: #1f2937;
+      --card: #ffffff;
     }[data-theme="dark"] {
-  --primary: #3b82f6;
-  --secondary: #1e3a8a;
-  --background: #0f172a;
-  --text: #f1f5f9;
-  --card: #1e293b;
+  --primary: #9ca3af;
+  --secondary: #111827;
+  --background: #000000;
+  --text: #f9fafb;
+  --card: #1f2937;
 }
 
 body {
@@ -45,7 +45,7 @@ input, select, button {
   width: 100%;
   padding: 0.75rem;
   margin: 0.3rem 0 1rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d1d5db;
   border-radius: 0.6rem;
   font-size: 1rem;
   background-color: var(--card);
@@ -65,7 +65,7 @@ button {
 }
 
 button:hover {
-  background-color: #1d4ed8;
+  background-color: #4b5563;
 }
 
 .result {
@@ -76,7 +76,7 @@ button:hover {
   border-radius: 0.6rem;
   line-height: 1.7;
   font-size: 1rem;
-  color: #fff;
+  color: var(--text);
 }
 
 .toggle-theme {
@@ -151,13 +151,11 @@ button:hover {
       const tpDistance = slDistance * rr;
       const riskAmount = (riskPercent / 100) * balance;
 
-      // Adjust balance if user wants limited margin usage
       const marginCap = (marginLimitPercent / 100) * balance;
       let positionSize = riskAmount / slDistance;
       let notionalSize = positionSize * entry;
 
-      // Enforce margin limit
-      if (notionalSize > marginCap * 50) { // Rough limit to protect high leverage
+      if (notionalSize > marginCap * 50) {
         positionSize = marginCap / entry;
         notionalSize = positionSize * entry;
       }
@@ -173,6 +171,8 @@ button:hover {
         tp = entry + tpDistance;
       }
 
+      const plPerDollar = positionSize;
+
       document.getElementById('result').innerHTML = `
         <strong>Currency:</strong> ${currency}<br />
         <strong>Stop Loss:</strong> ${currency} ${sl.toFixed(2)}<br />
@@ -185,7 +185,9 @@ button:hover {
         <strong>Position Size (BTC):</strong> ${positionSize.toFixed(6)}<br />
         <strong>Notional Trade Size:</strong> ${currency} ${notionalSize.toFixed(2)}<br />
         <strong>Required Leverage:</strong> ${requiredLeverage.toFixed(2)}x<br />
-        <strong>Margin Used:</strong> ${currency} ${(notionalSize / requiredLeverage).toFixed(2)} (${marginLimitPercent}% cap)
+        <strong>Margin Used:</strong> ${currency} ${(notionalSize / requiredLeverage).toFixed(2)} (${marginLimitPercent}% cap)<br /><br />
+
+        <strong>P/L per $1 BTC Move:</strong> ${currency} ${plPerDollar.toFixed(4)}
       `;
     }
   </script></body>
