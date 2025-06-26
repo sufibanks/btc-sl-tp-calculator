@@ -120,6 +120,8 @@ button:hover {
 
 <label for="riskPercent">Risk per Trade (%)</label> <input type="number" step="0.1" id="riskPercent" value="2" />
 
+<label for="marginUsage">Max Margin Usage (% of balance)</label> <input type="number" step="1" id="marginUsage" value="100" placeholder="e.g. 50 for half account used" />
+
 <button onclick="calculate()">Calculate</button>
 
   <div class="result" id="result"></div>  <script>
@@ -137,18 +139,32 @@ button:hover {
       const rr = parseFloat(document.getElementById('rr').value);
       const balance = parseFloat(document.getElementById('balance').value);
       const riskPercent = parseFloat(document.getElementById('riskPercent').value);
+      const marginLimitPercent = parseFloat(document.getElementById('marginUsage').value);
       const currency = document.getElementById('currency').value;
 
-      if (isNaN(entry) || isNaN(atr) || isNaN(buffer) || isNaN(rr) || isNaN(balance) || isNaN(riskPercent)) {
+      if (isNaN(entry) || isNaN(atr) || isNaN(buffer) || isNaN(rr) || isNaN(balance) || isNaN(riskPercent) || isNaN(marginLimitPercent)) {
         document.getElementById('result').innerHTML = '<strong>Please fill in all fields correctly.</strong>';
         return;
       }
 
       const slDistance = atr * buffer;
       const tpDistance = slDistance * rr;
+      const riskAmount = (riskPercent / 100) * balance;
+
+      // Adjust balance if user wants limited margin usage
+      const marginCap = (marginLimitPercent / 100) * balance;
+      let positionSize = riskAmount / slDistance;
+      let notionalSize = positionSize * entry;
+
+      // Enforce margin limit
+      if (notionalSize > marginCap * 50) { // Rough limit to protect high leverage
+        positionSize = marginCap / entry;
+        notionalSize = positionSize * entry;
+      }
+
+      const requiredLeverage = notionalSize / balance;
 
       let sl, tp;
-
       if (direction === 'sell') {
         sl = entry + slDistance;
         tp = entry - tpDistance;
@@ -156,11 +172,6 @@ button:hover {
         sl = entry - slDistance;
         tp = entry + tpDistance;
       }
-
-      const riskAmount = (riskPercent / 100) * balance;
-      const positionSize = riskAmount / slDistance;
-      const notionalSize = positionSize * entry;
-      const requiredLeverage = notionalSize / balance;
 
       document.getElementById('result').innerHTML = `
         <strong>Currency:</strong> ${currency}<br />
@@ -173,7 +184,8 @@ button:hover {
         <strong>Account Risk:</strong> ${currency} ${riskAmount.toFixed(2)}<br />
         <strong>Position Size (BTC):</strong> ${positionSize.toFixed(6)}<br />
         <strong>Notional Trade Size:</strong> ${currency} ${notionalSize.toFixed(2)}<br />
-        <strong>Required Leverage:</strong> ${requiredLeverage.toFixed(2)}x
+        <strong>Required Leverage:</strong> ${requiredLeverage.toFixed(2)}x<br />
+        <strong>Margin Used:</strong> ${currency} ${(notionalSize / requiredLeverage).toFixed(2)} (${marginLimitPercent}% cap)
       `;
     }
   </script></body>
